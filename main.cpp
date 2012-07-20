@@ -11,18 +11,20 @@
 #include <vector>
 #include <string>
 #include <cstring>
+#include <sstream>
 
 using namespace std;
 
-typedef struct {
+struct pcb {
     int pid;    //process ID code
     int tarq;   //time of arrival into the ready queue
     int prio;   //priority code
     int tncpu;  //total number of cpu bursts of the process
-    vector<int> bursttimes;
+    int * cpuburst;
+    int * ioburst;
     int wait;   //total wait time
     int turnaround; //total turnaround time
-} pcb;
+};
 
 struct node {
   struct pcb;
@@ -30,7 +32,7 @@ struct node {
 };
 
 
-void readFile(pcb* pcb) {
+void readFile() {
     ifstream infile;
     char fileToOpen[80];
     char buffer[80];
@@ -42,22 +44,29 @@ void readFile(pcb* pcb) {
     scanf("%s", fileToOpen);
     infile.open(fileToOpen, ifstream::in);
     while (infile.is_open()) {
-        infile.getline(buffer, line);
+        pcb * pcb;
+        int idx1=0;
+        int idx2=0;
+        infile.getline(buffer, 80);
+        istringstream buffer(line);
+        int value;
         //strtok and move data to pcb
         for (int i = 0; i < 4; i++) {
-            pch = strtok(buffer, " \t");
+            buffer >> value;
             switch (i) {
                 case 1:
-                    pcb->pid = pch;
+                    pcb->pid = value;
                     break;
                 case 2:
-                    pcb->tarq = pch;
+                    pcb->tarq = value;
                     break;
                 case 3:
-                    pcb->prio = pch;
+                    pcb->prio = value;
                     break;
                 case 4:
-                    pcb->tncpu = pch;
+                    pcb->tncpu = value;
+                    pcb->cpuburst = new int [value];
+                    pcb->ioburst = new int [value-1];
                     break;
                 default:
                     printf("Impossible to end up here");
@@ -65,8 +74,10 @@ void readFile(pcb* pcb) {
             }
         }
         for (int k = 0; k < (pcb->tncpu)*2-1; k++) {
-              pch = strtok(buffer, " \t");
-              pcb->bursttimes.insert(k, pch);
+            if (k%2==0)
+                buffer >> pcb->cpuburst[idx1++];
+            else
+                buffer >> pcb->ioburst[idx2++];
         }
     }
 }
@@ -77,6 +88,7 @@ void readFile(pcb* pcb) {
  */
 int main(int argc, char** argv) {
 
+    readFile();
     return 0;
 }
 
