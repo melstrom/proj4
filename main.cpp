@@ -66,7 +66,7 @@ public:
     {
         if(front==NULL)
         {
-            cout<<"\nQUEUE EMPTY";
+            //cout<<"\nQUEUE EMPTY";
             return NULL;
         }
         qNode *tmp;
@@ -160,6 +160,9 @@ void readFile() {
                 else
                     buffer >> conductor->pcb->ioburst[idx2++];
             }
+
+            conductor->pcb->turnaround = 0;
+            conductor->pcb->wait = 0;
             /* initialize the new memory */
             conductor->next = new node;
             conductor = conductor->next;
@@ -183,10 +186,24 @@ void sortTimes(int MAXtarq, lqueue * queue) {
         }
     }
 }
+void printReport() {
+    struct node *looper;
+    looper = root;
+    while (1) {
+        printf("\nPID:%d\n"
+                "Turnaround time:%d\n"
+                "Wait Time:%d\n",
+                looper->pcb->pid,
+                looper->pcb->turnaround,
+                looper->pcb->wait);
+        looper = looper->next;
+        if (looper->next == 0)
+            break;
+    }
 
+}
 void fifo () {
-    int time;
-    
+    int time=0;
     readFile();
 
     lqueue * queue = new lqueue;
@@ -194,18 +211,18 @@ void fifo () {
 
     pcb * ptr = queue->del();
     while (ptr != 0) {
-        for(int i=0; i<ptr->tncpu; i++) {
-            time =+ ptr->cpuburst[i];
+        int idx1=0;
+        int idx2=0;
+        ptr->wait = (ptr->wait + (time - ptr->turnaround));
+        for(int i = 0; i < (ptr->tncpu)*2-1; i++) {
+            if (i%2==0)
+                time += ptr->cpuburst[idx1++];
+            else
+                time += ptr->ioburst[idx2++];
             printf("|%d", ptr->pid);
         }
 
-        for(int k=0; k<ptr->tncpu-1; k++) {
-            time =+ ptr->ioburst[k];
-        }
-
         ptr->turnaround = (time - ptr->tarq);
-        ptr->wait = (time - ptr->tarq - ptr->turnaround);
-        
         ptr = queue->del();
     }
 }
@@ -220,6 +237,7 @@ int main(int argc, char** argv) {
     conductor = root;
 
     fifo();
+    printReport();
     return 0;
 }
 
