@@ -107,7 +107,8 @@ void readFile(struct node * root) {
     conductor = root;
     string line;
 
-    ifstream infile ("/Users/melstrom/Dropbox/EECE 315/proj4/testfile.txt");
+//    ifstream infile ("/Users/melstrom/Dropbox/EECE 315/proj4/testfile.txt");
+    ifstream infile ("C:/Users/cary/Documents/GitHub/proj4/testfile.txt");
 
     if ((infile.is_open())) {
 
