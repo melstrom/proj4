@@ -123,8 +123,6 @@ void readFile() {
                 printf( "Out of memory" );
                 exit(-1);
             }
-            /* initialize the new memory */
-            conductor->next = 0;
 
             int idx1=0;
             int idx2=0;
@@ -162,9 +160,10 @@ void readFile() {
                 else
                     buffer >> conductor->pcb->ioburst[idx2++];
             }
-
+            /* initialize the new memory */
             conductor->next = new node;
             conductor = conductor->next;
+            conductor->next = 0;
         }
     }
 }
@@ -179,7 +178,7 @@ void sortTimes(int MAXtarq, lqueue * queue) {
             if (sorter->pcb->tarq == i)
                 queue->add(sorter->pcb);
             sorter = sorter->next;
-            if (sorter == 0)
+            if (sorter->next == 0)
                 break;
         }
     }
