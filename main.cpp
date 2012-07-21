@@ -192,7 +192,7 @@ void printReport() {
     while (1) {
         printf("\nPID:%d\n"
                 "Turnaround time:%d\n"
-                "Wait Time:%d\n",
+                "Wait Time:%d\n\n",
                 looper->pcb->pid,
                 looper->pcb->turnaround,
                 looper->pcb->wait);
@@ -225,6 +225,52 @@ void fifo () {
         ptr->turnaround = (time - ptr->tarq);
         ptr = queue->del();
     }
+    printf("\nFIFO complete\n");
+}
+
+void RR () {
+    int time = 0;
+    int quantum;
+
+    readFile();
+    lqueue * cpuqueue = new lqueue;
+    lqueue * queue = new lqueue;
+    sortTimes(MAXtarq, queue);
+
+    printf("Quantum time for RR:\n");
+    scanf("%d", &quantum);
+
+    pcb * cpuptr;
+    pcb * ptr = queue->del();
+    while (ptr != 0) {
+        if (ptr->tarq <= time) {
+            cpuqueue->add(ptr);
+            ptr = queue->del();
+        }
+
+        cpuptr = cpuqueue->del();
+        if (cpuptr != 0) {
+            if (cpuptr->turnaround > time) {
+                cpuqueue->add(cpuptr);
+                cpuptr = cpuqueue->del();
+                break;
+            }
+            int i = 0;
+            while (cpuptr->cpuburst[i]==0) {
+                i++;
+            }
+            for (i; i<quantum; i++) {
+                cpuptr->cpuburst[i] = cpuptr->cpuburst[i]-1;
+                time++;
+                cpuptr->turnaround = cpuptr->turnaround + 1;
+                if (cpuptr->cpuburst[i] == 0) {
+                    cpuptr->turnaround += cpuptr->ioburst[i];
+                    break;
+                }
+            }
+        }
+        time++;
+    }
 }
 
 /*
@@ -238,6 +284,9 @@ int main(int argc, char** argv) {
 
     fifo();
     printReport();
+
+    RR();
+    printReport();
+    
     return 0;
 }
-
