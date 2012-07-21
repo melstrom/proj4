@@ -24,6 +24,7 @@ struct pcb {
     int * ioburst;
     int wait;   //total wait time
     int turnaround; //total turnaround time
+	int readytime;	//next ready time
 };
 
 struct qNode
@@ -168,6 +169,7 @@ void readFile(struct node * root) {
 
             pcb1->turnaround = 0;
             pcb1->wait = 0;
+			pcb1->readytime = 0;
             /* initialize the new memory */
             conductor->next = new node;
             conductor = conductor->next;
@@ -266,9 +268,9 @@ void RR () {
 
     while (1) {
         if (ptr != 0) {
-            if (ptr->tarq <= time) {
+            if (ptr->readytime <= time) {
                 cpuqueue->add(ptr);
-                temp = time;
+                ptr->readytime = time;
                 ptr = queue->del();
             }
         }
@@ -276,13 +278,13 @@ void RR () {
         cpuptr = cpuqueue->del();
 
         if (cpuptr != 0) {
-            if (cpuptr->turnaround > time) {
+            if (cpuptr->ready > time) {
                 cpuqueue->add(cpuptr);
                 cpuptr = cpuqueue->del();
                 break;
             }
             
-            temp2 = temp - time;
+            temp2 = cpuptr->readytime - time;
             if (temp2 > 0)
                 cpuptr->wait = cpuptr->wait + temp2;
 
@@ -310,6 +312,7 @@ void RR () {
 
                 if (cpuptr->cpuburst[i] == 0) {
                     cpuptr->turnaround += cpuptr->ioburst[i];
+					cpuptr->readytime = cpuptr->turnaround;
                     cpuptr->ioburst[i] = 0;
                     break;
                 }
@@ -327,6 +330,200 @@ void RR () {
     printf("\nRR complete\n");
 }
 
+void prioritypicnic (void) {
+	root = new node;
+    root->next = 0;
+	
+	readFile(root);
+	
+    lqueue * queue = new lqueue;
+    sortTimes(MAXtarq, queue, root);
+
+	lqueue * cpuqueue = new lqueue;
+	lqueue * swapqueue = new lqueue;
+    pcb * cpuptr;
+    pcb * ptr = queue->del();
+	
+	while (1) {
+        if (ptr != 0) {
+            if (ptr->readytime <= time) {
+                cpuptr = cpuqueue->del;
+				while (cpuptr != 0) {
+					if (cpuptr->prio > ptr->prio) {
+						swapqueue->add(cpuptr);
+					}
+					else { 
+							swapqueue->add(ptr)
+				}
+				}
+				
+					cpuqueue = swapqueue;
+                ptr->readytime = time;
+                ptr = queue->del();
+            }
+        }
+		
+        cpuptr = cpuqueue->del();
+		
+        if (cpuptr != 0) {
+            if (cpuptr->ready > time) {
+                cpuqueue->add(cpuptr);
+                cpuptr = cpuqueue->del();
+                break;
+            }
+            
+            temp2 = cpuptr->readytime - time;
+            if (temp2 > 0)
+                cpuptr->wait = cpuptr->wait + temp2;
+			
+            int i = 0;
+			
+            while (i < (cpuptr->tncpu - 1)) {
+                if (cpuptr->cpuburst[i]==0)
+                    i++;
+                else
+                    break;
+            }
+			
+            for (int k = 0; k < quantum; k++) {
+                cpuptr->cpuburst[i] = cpuptr->cpuburst[i]-1;
+                time++;
+                cpuptr->turnaround = cpuptr->turnaround + 1;
+				
+                if (ptr != 0)
+					
+                    if (ptr->tarq <= time) {
+                        cpuqueue->add(ptr);
+                        temp = time;
+                        ptr = queue->del();
+                    }
+				
+                if (cpuptr->cpuburst[i] == 0) {
+                    cpuptr->turnaround += cpuptr->ioburst[i];
+					cpuptr->readytime = cpuptr->turnaround;
+                    cpuptr->ioburst[i] = 0;
+                    break;
+                }
+            }
+            if (i != (cpuptr->tncpu - 1))
+                cpuqueue->add(cpuptr);
+        }
+		
+        else
+            time++;
+		
+        if ((time >= MAXtarq)&&(cpuptr==0))
+            break;
+	
+}
+		
+		void prioritypreempt () {
+			void prioritypicnic (void) {
+				root = new node;
+				root->next = 0;
+				
+				readFile(root);
+				
+				lqueue * queue = new lqueue;
+				sortTimes(MAXtarq, queue, root);
+				
+				lqueue * cpuqueue = new lqueue;
+				lqueue * swapqueue = new lqueue;
+				pcb * cpuptr;
+				pcb * ptr = queue->del();
+				
+				while (1) {
+					if (ptr != 0) {
+						if (ptr->readytime <= time) {
+							cpuptr = cpuqueue->del;
+							while (cpuptr != 0) {
+								if (cpuptr->prio > ptr->prio) {
+									swapqueue->add(cpuptr);
+									else 
+										swapqueue->add(ptr)
+										cpuptr = cpuqueue->del;
+								}
+								
+								cpuqueue = swapqueue;
+								ptr->readytime = time;
+								ptr = queue->del();
+							}
+						}
+						
+						cpuptr = cpuqueue->del();
+						
+						if (cpuptr != 0) {
+							if (cpuptr->ready > time) {
+								cpuqueue->add(cpuptr);
+								cpuptr = cpuqueue->del();
+								break;
+							}
+							
+							temp2 = cpuptr->readytime - time;
+							if (temp2 > 0)
+								cpuptr->wait = cpuptr->wait + temp2;
+							
+							int i = 0;
+							
+							while (i < (cpuptr->tncpu - 1)) {
+								if (cpuptr->cpuburst[i]==0)
+									i++;
+								else
+									break;
+							}
+							
+							for (int k = 0; k < quantum; k++) {
+								cpuptr->cpuburst[i] = cpuptr->cpuburst[i]-1;
+								time++;
+								cpuptr->turnaround = cpuptr->turnaround + 1;
+								
+								if (ptr != 0)
+									
+									if (ptr->tarq <= time) {
+										if (ptr->prio > cpuptr->prio) {
+											swapqueue->add(ptr);
+											while (cpuptr != 0){
+												swapqueue->add(cpuptr);
+											swapqueue->add(cpuptr->del);
+											}
+											cpuqueue = swapqueue;
+										}
+										
+										else {
+											while (cpuptr != 0) {
+												if (cpuptr->prio > ptr->prio) {
+													swapqueue->add(cpuptr);
+													else 
+														swapqueue->add(ptr)
+														cpuptr = cpuqueue->del;
+												}
+										}
+
+										cpuqueue->add(ptr);
+										temp = time;
+										ptr = queue->del();
+									}
+								
+								if (cpuptr->cpuburst[i] == 0) {
+									cpuptr->turnaround += cpuptr->ioburst[i];
+									cpuptr->readytime = cpuptr->turnaround;
+									cpuptr->ioburst[i] = 0;
+									break;
+								}
+							}
+							if (i != (cpuptr->tncpu - 1))
+								cpuqueue->add(cpuptr);
+						}
+						
+						else
+							time++;
+						
+						if ((time >= MAXtarq)&&(cpuptr==0))
+							break;
+						
+						
+					}
+		}
 /*
  * 
  */
