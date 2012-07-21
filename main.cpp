@@ -103,16 +103,17 @@ struct node *root;
 struct node *conductor;
 int MAXtarq = 0;
 
-void readFile() {
-    ifstream infile ("/Users/melstrom/Dropbox/EECE 315/proj4/testfile.txt");
+void readFile(struct node * root) {
+    conductor = root;
     string line;
 
+    ifstream infile ("/Users/melstrom/Dropbox/EECE 315/proj4/testfile.txt");
 
     if ((infile.is_open())) {
+
         while (infile.good()) {
             struct pcb * pcb1;
             pcb1 = new pcb;
-
             /* Creates a node at the end of the list */
             if (conductor->next==0) {
                 conductor->pcb = pcb1;
@@ -129,40 +130,43 @@ void readFile() {
             getline(infile, line);
             istringstream buffer(line);
             int value;
-            //strtok and move data to pcb
+
             for (int i = 0; i < 4; i++) {
                 buffer >> value;
+
                 switch (i) {
                     case 0:
-                        conductor->pcb->pid = value;
+                        pcb1->pid = value;
                         break;
                     case 1:
-                        conductor->pcb->tarq = value;
+                        pcb1->tarq = value;
                         if (value > MAXtarq)
                             MAXtarq = value;
                         break;
                     case 2:
-                        conductor->pcb->prio = value;
+                        pcb1->prio = value;
                         break;
                     case 3:
-                        conductor->pcb->tncpu = value;
-                        conductor->pcb->cpuburst = new int [value];
-                        conductor->pcb->ioburst = new int [value-1];
+                        pcb1->tncpu = value;
+                        pcb1->cpuburst = new int [value];
+                        pcb1->ioburst = new int [value-1];
                         break;
                     default:
                         printf("Impossible to end up here");
                         break;
                 }
             }
-            for (int k = 0; k < (conductor->pcb->tncpu)*2-1; k++) {
+
+            for (int k = 0; k < (pcb1->tncpu)*2-1; k++) {
                 if (k%2==0)
-                    buffer >> conductor->pcb->cpuburst[idx1++];
+                    buffer >> pcb1->cpuburst[idx1++];
+
                 else
-                    buffer >> conductor->pcb->ioburst[idx2++];
+                    buffer >> pcb1->ioburst[idx2++];
             }
 
-            conductor->pcb->turnaround = 0;
-            conductor->pcb->wait = 0;
+            pcb1->turnaround = 0;
+            pcb1->wait = 0;
             /* initialize the new memory */
             conductor->next = new node;
             conductor = conductor->next;
@@ -171,17 +175,18 @@ void readFile() {
     }
 }
 
-void sortTimes(int MAXtarq, lqueue * queue) {
-    struct node *sorter;
-    
+void sortTimes(int MAXtarq, lqueue * queue, struct node * root) {
+    conductor = root;
 
     for (int i = 0; i <= MAXtarq; i++) {
-        sorter = root;
+        conductor = root;
+
         while (1) {
-            if (sorter->pcb->tarq == i)
-                queue->add(sorter->pcb);
-            sorter = sorter->next;
-            if (sorter->next == 0)
+            if (conductor->pcb->tarq == i)
+                queue->add(conductor->pcb);
+            conductor = conductor->next;
+
+            if (conductor->next == 0)
                 break;
         }
     }
@@ -189,6 +194,7 @@ void sortTimes(int MAXtarq, lqueue * queue) {
 void printReport() {
     struct node *looper;
     looper = root;
+
     while (1) {
         printf("\nPID:%d\n"
                 "Turnaround time:%d\n"
@@ -197,26 +203,33 @@ void printReport() {
                 looper->pcb->turnaround,
                 looper->pcb->wait);
         looper = looper->next;
+
         if (looper->next == 0)
             break;
     }
 
 }
 void fifo () {
+    root = new node;
+    root->next = 0;
+
     int time=0;
-    readFile();
+    readFile(root);
 
     lqueue * queue = new lqueue;
-    sortTimes(MAXtarq, queue);
+    sortTimes(MAXtarq, queue, root);
 
     pcb * ptr = queue->del();
+
     while (ptr != 0) {
         int idx1=0;
         int idx2=0;
         ptr->wait = (ptr->wait + (time - ptr->turnaround));
+
         for(int i = 0; i < (ptr->tncpu)*2-1; i++) {
             if (i%2==0)
                 time += ptr->cpuburst[idx1++];
+
             else
                 time += ptr->ioburst[idx2++];
             printf("|%d", ptr->pid);
@@ -229,58 +242,94 @@ void fifo () {
 }
 
 void RR () {
+
+    root = new node;
+    root->next = 0;
+
     int time = 0;
+    int temp = 0;
+    int temp2 = 0;
     int quantum;
 
-    readFile();
-    lqueue * cpuqueue = new lqueue;
+    readFile(root);
+
     lqueue * queue = new lqueue;
-    sortTimes(MAXtarq, queue);
+    sortTimes(MAXtarq, queue, root);
 
     printf("Quantum time for RR:\n");
     scanf("%d", &quantum);
-
+    
+    lqueue * cpuqueue = new lqueue;
     pcb * cpuptr;
     pcb * ptr = queue->del();
-    while (ptr != 0) {
-        if (ptr->tarq <= time) {
-            cpuqueue->add(ptr);
-            ptr = queue->del();
+
+    while (1) {
+        if (ptr != 0) {
+            if (ptr->tarq <= time) {
+                cpuqueue->add(ptr);
+                temp = time;
+                ptr = queue->del();
+            }
         }
 
         cpuptr = cpuqueue->del();
+
         if (cpuptr != 0) {
             if (cpuptr->turnaround > time) {
                 cpuqueue->add(cpuptr);
                 cpuptr = cpuqueue->del();
                 break;
             }
+            
+            temp2 = temp - time;
+            if (temp2 > 0)
+                cpuptr->wait = cpuptr->wait + temp2;
+
             int i = 0;
-            while (cpuptr->cpuburst[i]==0) {
-                i++;
+
+            while (i < (cpuptr->tncpu - 1)) {
+                if (cpuptr->cpuburst[i]==0)
+                    i++;
+                else
+                    break;
             }
-            for (i; i<quantum; i++) {
+
+            for (int k = 0; k < quantum; k++) {
                 cpuptr->cpuburst[i] = cpuptr->cpuburst[i]-1;
                 time++;
                 cpuptr->turnaround = cpuptr->turnaround + 1;
+
+                if (ptr != 0)
+
+                    if (ptr->tarq <= time) {
+                        cpuqueue->add(ptr);
+                        temp = time;
+                        ptr = queue->del();
+                    }
+
                 if (cpuptr->cpuburst[i] == 0) {
                     cpuptr->turnaround += cpuptr->ioburst[i];
+                    cpuptr->ioburst[i] = 0;
                     break;
                 }
             }
+            if (i != (cpuptr->tncpu - 1))
+                cpuqueue->add(cpuptr);
         }
-        time++;
+
+        else
+            time++;
+
+        if ((time >= MAXtarq)&&(cpuptr==0))
+            break;
     }
+    printf("\nRR complete\n");
 }
 
 /*
  * 
  */
 int main(int argc, char** argv) {
-    
-    root = new node;
-    root->next = 0;
-    conductor = root;
 
     fifo();
     printReport();
