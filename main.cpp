@@ -193,6 +193,21 @@ void sortTimes(int MAXtarq, lqueue * queue, struct node * root) {
         }
     }
 }
+
+void priorityInsertion (pcb * ptr, pcb * cpuptr, lqueue * cpuqueue) {
+    lqueue * swapqueue = new lqueue;
+    cpuptr = cpuqueue->del();
+    while (cpuptr != 0) {
+        if (cpuptr->prio > ptr->prio) {
+                swapqueue->add(cpuptr);
+                cpuptr = cpuqueue->del();
+        }
+        else
+                swapqueue->add(ptr);
+    }
+    cpuqueue = swapqueue;
+}
+
 void printReport() {
     struct node *looper;
     looper = root;
@@ -244,13 +259,10 @@ void fifo () {
 }
 
 void RR () {
+    int temp, temp2, time = 0;
+    int quantum;
     root = new node;
     root->next = 0;
-
-    int time = 0;
-    int temp = 0;
-    int temp2 = 0;
-    int quantum;
 
     readFile(root);
 
@@ -329,11 +341,9 @@ void RR () {
 }
 
 void priority () {
-    int temp;
-    int temp2;
+    int temp, temp2, time = 0;
     root = new node;
     root->next = 0;
-    int time = 0;
 	
     readFile(root);
 	
@@ -341,7 +351,6 @@ void priority () {
     sortTimes(MAXtarq, queue, root);
 
     lqueue * cpuqueue = new lqueue;
-    lqueue * swapqueue = new lqueue;
     
     pcb * cpuptr;
     pcb * ptr = queue->del();
@@ -349,16 +358,9 @@ void priority () {
     while (1) {
         if (ptr != 0) {
             if ((ptr->readytime) <= time) {
-                cpuptr = cpuqueue->del();
-		while (cpuptr != 0) {
-                        if (cpuptr->prio > ptr->prio)
-                                swapqueue->add(cpuptr);
-			else
-                                swapqueue->add(ptr);
-                        cpuqueue = swapqueue;
-                        ptr->readytime = time;
-                        ptr = queue->del();
-                }
+                priorityInsertion(ptr, cpuptr, cpuqueue);
+                ptr->readytime = time;
+                ptr = queue->del();
             }
         }
 		
@@ -418,10 +420,7 @@ void priority () {
 }
 
 void prioritypreempt () {
-    int temp;
-    int temp2;
-    int time = 0;
-    
+    int temp, temp2, time = 0;
     root = new node;
     root->next = 0;
 
@@ -438,16 +437,7 @@ void prioritypreempt () {
     while (1) {
         if (ptr != 0) {
             if (ptr->readytime <= time) {
-                cpuptr = cpuqueue->del();
-                while (cpuptr != 0) {
-                    if (cpuptr->prio > ptr->prio)
-                        swapqueue->add(cpuptr);
-                    else {
-                        swapqueue->add(ptr);
-                        cpuptr = cpuqueue->del();
-                    }
-                }
-                cpuqueue = swapqueue;
+                priorityInsertion(ptr, cpuptr, cpuqueue);
                 ptr->readytime = time;
                 ptr = queue->del();
             }
