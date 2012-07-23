@@ -593,14 +593,31 @@ void prioritypreempt() {
             }
         }
 
-        if (ioptr != 0) {
-            if ((ioptr->readytime) <= time) {
+                //Check IO queue
+                if (ioptr != 0) {
+                    if ((ioptr->readytime) >= time) {
+                        if (ioptr->prio < cpuptr->prio) {
+                            lqueue * swapqueue = new lqueue;
+                            swapqueue->add(ioptr);
+                            swapqueue->add(cpuptr);
+                            cpuptr = cpuqueue->del();
+                            while (cpuptr != 0) {
+                                swapqueue->add(cpuptr);
+                                cpuptr = cpuqueue->del();
+                            }
+                            cpuqueue = swapqueue;
+                            ioptr = queue->del();
+                            //                            cpuptr = cpuqueue->del();
+                            break;
 
-                cpuqueue = priorityInsertion(ioptr, cpuptr, cpuqueue);
-                cpuptr = cpuqueue->del();
-                ioptr = ioqueue->del();
-            }
-        }
+                        } else {
+                            cpuqueue = priorityInsertion(ioptr, cpuptr, cpuqueue);
+                            cpuptr = cpuqueue->del();
+                            ioptr = queue->del();
+                        }
+                    }
+                }
+
         cpuptr = cpuqueue->del();
 
         if (cpuptr != 0) {
@@ -609,9 +626,14 @@ void prioritypreempt() {
 
             //CPU Processing
             while (cpuptr->cpuburst[i] > 0) {
+                
+                                printf("|%d", cpuptr->pid);
+                cpuptr->turnaround++;
+                cpuptr->cpuburst[i]--;
+                time++;
                 //Check for new arrivals
                 if (ptr != 0) {
-                    if (ptr->tarq <= time) {
+                    if (ptr->tarq >= time) {
                         if (ptr->prio < cpuptr->prio) {
                             lqueue * swapqueue = new lqueue;
                             swapqueue->add(ptr);
@@ -637,16 +659,29 @@ void prioritypreempt() {
                 //Check IO queue
                 if (ioptr != 0) {
                     if ((ioptr->readytime) <= time) {
-                        cpuqueue = priorityInsertion(ioptr, cpuptr, cpuqueue);
-                        cpuptr = cpuqueue->del();
-                        ioptr = ioqueue->del();
+                        if (ioptr->prio < cpuptr->prio) {
+                            lqueue * swapqueue = new lqueue;
+                            swapqueue->add(ioptr);
+                            swapqueue->add(cpuptr);
+                            cpuptr = cpuqueue->del();
+                            while (cpuptr != 0) {
+                                swapqueue->add(cpuptr);
+                                cpuptr = cpuqueue->del();
+                            }
+                            cpuqueue = swapqueue;
+                            ioptr = queue->del();
+                            //                            cpuptr = cpuqueue->del();
+                            break;
+
+                        } else {
+                            cpuqueue = priorityInsertion(ioptr, cpuptr, cpuqueue);
+                            cpuptr = cpuqueue->del();
+                            ioptr = queue->del();
+                        }
                     }
                 }
 
-                printf("|%d", cpuptr->pid);
-                cpuptr->turnaround++;
-                cpuptr->cpuburst[i]--;
-                time++;
+
                 //Do IO if CPU complete
                 if ((i < cpuptr->tncpu - 1) && (cpuptr->cpuburst[i] == 0)) {
                     doIO(time, i, cpuptr);
