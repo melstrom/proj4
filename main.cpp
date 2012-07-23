@@ -412,23 +412,8 @@ void priority() {
 
         if (ioptr != 0) {
             if ((ioptr->readytime) <= time) {
-                lqueue * swapqueue = new lqueue;
-                swapqueue->add(cpuptr);
-                cpuptr = cpuqueue->del();
-                if (cpuptr == 0) {
-                    swapqueue->add(ioptr);
-                }
-                while (cpuptr->prio < ioptr->prio) {
-                    swapqueue->add(cpuptr);
-                    cpuptr = cpuqueue->del();
-                }
-                swapqueue->add(ioptr);
-                while (cpuptr != 0) {
-                    swapqueue->add(cpuptr);
-                    cpuptr = cpuqueue->del();
-                }
 
-                cpuqueue = swapqueue;
+                cpuqueue = priorityInsertion(ioptr, cpuptr, cpuqueue);
                 cpuptr = cpuqueue->del();
                 ioptr = ioqueue->del();
             }
@@ -437,7 +422,6 @@ void priority() {
 
         if (cpuptr != 0) {
             calculateWait(cpuptr, time);
-
             int i = skipCompleted(cpuptr);
 
             //CPU Processing
@@ -456,23 +440,7 @@ void priority() {
                 //Check IO queue
                 if (ioptr != 0) {
                     if ((ioptr->readytime) <= time) {
-                        lqueue * swapqueue = new lqueue;
-                        swapqueue->add(cpuptr);
-                        cpuptr = cpuqueue->del();
-                        if (cpuptr == 0) {
-                            swapqueue->add(ioptr);
-                        }
-                        while (cpuptr->prio < ioptr->prio) {
-                            swapqueue->add(cpuptr);
-                            cpuptr = cpuqueue->del();
-                        }
-                        swapqueue->add(ioptr);
-                        while (cpuptr != 0) {
-                            swapqueue->add(cpuptr);
-                            cpuptr = cpuqueue->del();
-                        }
-
-                        cpuqueue = swapqueue;
+                        cpuqueue = priorityInsertion(ioptr, cpuptr, cpuqueue);
                         cpuptr = cpuqueue->del();
                         ioptr = ioqueue->del();
                     }
@@ -527,7 +495,9 @@ void prioritypreempt() {
 
         if (ioptr != 0) {
             if ((ioptr->readytime) <= time) {
-                cpuqueue->add(ioptr);
+
+                cpuqueue = priorityInsertion(ioptr, cpuptr, cpuqueue);
+                cpuptr = cpuqueue->del();
                 ioptr = ioqueue->del();
             }
         }
@@ -535,13 +505,13 @@ void prioritypreempt() {
 
         if (cpuptr != 0) {
             calculateWait(cpuptr, time);
-
-            //Skip through 0 time CPU bursts
             int i = skipCompleted(cpuptr);
 
             //CPU Processing
             for (int k = 0; k < cpuptr->cpuburst[i]; k++) {
                 printf("|%d", cpuptr->pid);
+                cpuptr->turnaround++;
+                cpuptr->cpuburst[i]--;
                 time++;
 
                 //Check for new arrivals
@@ -558,23 +528,21 @@ void prioritypreempt() {
                             }
                             cpuqueue = swapqueue;
                             ptr = queue->del();
-                            cpuptr = cpuqueue->del();
+//                            cpuptr = cpuqueue->del();
+                            break;
 
-
-                        } else {
+                        }
+                        else {
                             cpuqueue = priorityInsertion(ptr, cpuptr, cpuqueue);
-                            ptr = queue->del();
                             cpuptr = cpuqueue->del();
-
-
+                            ptr = queue->del();
                         }
                     }
                 }
             }
-            cpuptr->turnaround += cpuptr->cpuburst[i];
-            cpuptr->cpuburst[i] = 0;
+
             //Do IO if CPU complete
-            if (cpuptr->ioburst[i] > 0) {
+            if ((cpuptr->cpuburst[i] == 0) && (cpuptr->ioburst[i] > 0)) {
                 doIO(time, i, cpuptr);
                 ioptr = cpuptr;
                 ioqueue->add(ioptr);
