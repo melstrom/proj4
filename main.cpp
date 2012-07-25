@@ -51,7 +51,8 @@ public:
 
         tmp->pcb = n;
         tmp->link = NULL;
-        if (front == NULL) {
+        if (front == NULL)
+        {
             rear = front = tmp;
             return;
         }
@@ -60,7 +61,8 @@ public:
     }
 
     pcb * del() {
-        if (front == NULL) {
+        if (front == NULL)
+        {
             return NULL;
         }
         qNode *tmp;
@@ -76,7 +78,8 @@ public:
         if (front == NULL)
             return;
         qNode *tmp;
-        while (front != NULL) {
+        while (front != NULL)
+        {
             tmp = front;
             front = front->link;
             delete tmp;
@@ -97,22 +100,26 @@ void readFile(struct node * root) {
     string location;
     string line;
 
-//    printf("Enter the full path to list of jobs:\n");
-//    scanf("%s", &location);
+    //    printf("Enter the full path to list of jobs:\n");
+    //    scanf("%s", &location);
     //    ifstream infile ("/Users/melstrom/Dropbox/EECE 315/proj4/testfile.txt");
-       ifstream infile("C:/Users/cary/Documents/GitHub/proj4/testfile.txt");
-//    ifstream infile(location.c_str());
+    ifstream infile("C:/Users/cary/Documents/GitHub/proj4/testfile.txt");
+    //    ifstream infile(location.c_str());
 
-    if ((infile.is_open())) {
-        while (infile.good()) {
+    if ((infile.is_open()))
+    {
+        while (infile.good())
+        {
             struct pcb * pcb1;
             pcb1 = new pcb;
             /* Creates a node at the end of the list */
-            if (conductor->next == 0) {
+            if (conductor->next == 0)
+            {
                 conductor->pcb = pcb1;
             }
 
-            if (conductor == 0) {
+            if (conductor == 0)
+            {
                 printf("Out of memory");
                 exit(-1);
             }
@@ -123,7 +130,8 @@ void readFile(struct node * root) {
             istringstream buffer(line);
             int value;
 
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < 4; i++)
+            {
                 buffer >> value;
 
                 switch (i) {
@@ -132,7 +140,8 @@ void readFile(struct node * root) {
                         break;
                     case 1:
                         pcb1->tarq = value;
-                        if (pcb1->tarq < 0) {
+                        if (pcb1->tarq < 0)
+                        {
                             printf("Cannot go back in time; time traveller needed");
                             exit(-1);
                         }
@@ -141,11 +150,13 @@ void readFile(struct node * root) {
                         break;
                     case 2:
                         pcb1->prio = value;
-                        if (pcb1->prio > 19) {
-                                printf("Priority cannot exceed 19");
-                                exit(-1);
+                        if (pcb1->prio > 19)
+                        {
+                            printf("Priority cannot exceed 19");
+                            exit(-1);
                         }
-                        if (pcb1->prio < 0) {
+                        if (pcb1->prio < 0)
+                        {
                             printf("Priority cannot be lower than 0");
                             exit(-1);
                         }
@@ -161,7 +172,8 @@ void readFile(struct node * root) {
                 }
             }
 
-            for (int k = 0; k < (pcb1->tncpu)*2 - 1; k++) {
+            for (int k = 0; k < (pcb1->tncpu)*2 - 1; k++)
+            {
                 if (k % 2 == 0)
                     buffer >> pcb1->cpuburst[idx1++];
 
@@ -187,9 +199,11 @@ void readFile(struct node * root) {
 void sortTimes(int MAXtarq, lqueue * queue, struct node * root) {
     struct node * conductor = root;
 
-    for (int i = 0; i <= MAXtarq; i++) {
+    for (int i = 0; i <= MAXtarq; i++)
+    {
         conductor = root;
-        while (1) {
+        while (1)
+        {
             if (conductor->pcb->tarq == i)
                 queue->add(conductor->pcb);
 
@@ -204,7 +218,8 @@ void sortTimes(int MAXtarq, lqueue * queue, struct node * root) {
 
 void calculateWait(pcb * cpuptr, int time) {
     int wait = time - cpuptr->readytime;
-    if (wait > 0) {
+    if (wait > 0)
+    {
         cpuptr->wait += wait;
         cpuptr->turnaround += wait;
 
@@ -214,29 +229,51 @@ void calculateWait(pcb * cpuptr, int time) {
 //Skip through 0 time CPU bursts
 
 int skipCompleted(pcb * cpuptr) {
-    for (int i = 0; i < cpuptr->tncpu; i++) {
+    for (int i = 0; i < cpuptr->tncpu; i++)
+    {
         if (cpuptr->cpuburst[i] != 0)
             return i;
     }
 }
+
+//Inserts and sorts the arriving job into CPU queue based on priority
+
+lqueue * fifoInsert(pcb * ptr, pcb * cpuptr, lqueue * cpuqueue) {
+    lqueue * swapqueue = new lqueue;
+    while (cpuptr != 0)
+    {
+        swapqueue->add(cpuptr);
+        cpuptr = cpuqueue->del();
+    }
+    swapqueue->add(ptr);
+    return swapqueue;
+}
+
 //Inserts and sorts the arriving job into CPU queue based on priority
 
 lqueue * priorityInsertion(pcb * ptr, pcb * cpuptr, lqueue * cpuqueue) {
     lqueue * swapqueue = new lqueue;
 
-    if (cpuptr == 0) {
+    if (cpuptr == 0)
+    {
         swapqueue->add(ptr);
-    } else {
+    }
+    else
+    {
         swapqueue->add(cpuptr);
         cpuptr = cpuqueue->del();
-        if (cpuptr == 0) {
+        if (cpuptr == 0)
+        {
             swapqueue->add(ptr);
             return swapqueue;
         }
-        while (cpuptr != 0) {
-            if (cpuptr->prio >= ptr->prio) {
+        while (cpuptr != 0)
+        {
+            if (cpuptr->prio >= ptr->prio)
+            {
                 swapqueue->add(ptr);
-                while (cpuptr != 0) {
+                while (cpuptr != 0)
+                {
                     swapqueue->add(cpuptr);
                     cpuptr = cpuqueue->del();
                 }
@@ -246,7 +283,8 @@ lqueue * priorityInsertion(pcb * ptr, pcb * cpuptr, lqueue * cpuqueue) {
 
             swapqueue->add(cpuptr);
             cpuptr = cpuqueue->del();
-            if (cpuptr == 0) {
+            if (cpuptr == 0)
+            {
                 swapqueue->add(ptr);
                 return swapqueue;
 
@@ -256,25 +294,54 @@ lqueue * priorityInsertion(pcb * ptr, pcb * cpuptr, lqueue * cpuqueue) {
     return swapqueue;
 }
 
+lqueue * preempInsertion(pcb * ptr, pcb * cpuptr, lqueue * cpuqueue) {
+    lqueue * swapqueue = new lqueue;
+
+    if (ptr->prio < cpuptr->prio)
+    {
+        lqueue * swapqueue = new lqueue;
+        swapqueue->add(ptr);
+        swapqueue->add(cpuptr);
+        cpuptr = cpuqueue->del();
+        while (cpuptr != 0)
+        {
+            swapqueue->add(cpuptr);
+            cpuptr = cpuqueue->del();
+        }
+    }
+    else
+    {
+        swapqueue = priorityInsertion(ptr, cpuptr, cpuqueue);
+    }
+    return swapqueue;
+}
+
 lqueue * shortJobInsertion(pcb * ptr, pcb * cpuptr, lqueue * cpuqueue) {
     lqueue * swapqueue = new lqueue;
 
-    if (cpuptr == 0) {
+    if (cpuptr == 0)
+    {
         swapqueue->add(ptr);
-    } else {
+    }
+    else
+    {
         swapqueue->add(cpuptr);
         cpuptr = cpuqueue->del();
-        if (cpuptr == 0) {
+        if (cpuptr == 0)
+        {
             swapqueue->add(ptr);
             return swapqueue;
         }
-                    int k = skipCompleted(ptr);
-        while (cpuptr != 0) {
+        int k = skipCompleted(ptr);
+        while (cpuptr != 0)
+        {
             int i = skipCompleted(cpuptr);
 
-            if (cpuptr->cpuburst[i] >= ptr->cpuburst[k]) {
+            if (cpuptr->cpuburst[i] >= ptr->cpuburst[k])
+            {
                 swapqueue->add(ptr);
-                while (cpuptr != 0) {
+                while (cpuptr != 0)
+                {
                     swapqueue->add(cpuptr);
                     cpuptr = cpuqueue->del();
                 }
@@ -284,7 +351,8 @@ lqueue * shortJobInsertion(pcb * ptr, pcb * cpuptr, lqueue * cpuqueue) {
 
             swapqueue->add(cpuptr);
             cpuptr = cpuqueue->del();
-            if (cpuptr == 0) {
+            if (cpuptr == 0)
+            {
                 swapqueue->add(ptr);
                 return swapqueue;
 
@@ -295,8 +363,10 @@ lqueue * shortJobInsertion(pcb * ptr, pcb * cpuptr, lqueue * cpuqueue) {
 }
 
 pcb * checkIOqueue(int time, pcb * cpuptr, pcb * ioptr, lqueue * cpuqueue, lqueue * ioqueue) {
-    if (ioptr != 0) {
-        if ((ioptr->readytime) <= time) {
+    if (ioptr != 0)
+    {
+        if ((ioptr->readytime) <= time)
+        {
             cpuqueue->add(ioptr);
             return ioqueue->del();
         }
@@ -312,15 +382,21 @@ void doIO(int time, int i, pcb * cpuptr) {
 }
 
 lqueue * ioInsertion(pcb * ioptr, pcb * cpuptr, lqueue * ioqueue) {
-    if (ioptr == 0) {
+    if (ioptr == 0)
+    {
         ioqueue->add(cpuptr);
         return ioqueue;
-    } else {
+    }
+    else
+    {
         lqueue * ioswap = new lqueue;
-        while (ioptr != 0) {
-            if (cpuptr->readytime < ioptr->readytime) {
+        while (ioptr != 0)
+        {
+            if (cpuptr->readytime < ioptr->readytime)
+            {
                 ioswap->add(cpuptr);
-                while (ioptr != 0) {
+                while (ioptr != 0)
+                {
                     ioswap->add(ioptr);
                     ioptr = ioqueue->del();
                 }
@@ -328,7 +404,8 @@ lqueue * ioInsertion(pcb * ioptr, pcb * cpuptr, lqueue * ioqueue) {
             }
             ioswap->add(ioptr);
             ioptr = ioqueue->del();
-            if (ioptr == 0) {
+            if (ioptr == 0)
+            {
                 ioswap->add(cpuptr);
                 return ioswap;
             }
@@ -341,14 +418,14 @@ lqueue * ioInsertion(pcb * ioptr, pcb * cpuptr, lqueue * ioqueue) {
 
 int calculateAverageWait(int i, int totalwait) {
     printf("Average Wait Time:%d\n"
-            , (totalwait / i));
-    return totalwait/i;
+           , (totalwait / i));
+    return totalwait / i;
 }
 
-int calculateAverageTurnaround (int i, int totalturnaround) {
+int calculateAverageTurnaround(int i, int totalturnaround) {
     printf(
-            "Average Turnaround Time:%d\n", (totalturnaround / i));
-    return totalturnaround/i;
+           "Average Turnaround Time:%d\n", (totalturnaround / i));
+    return totalturnaround / i;
 }
 
 int waitReport(struct node * root) {
@@ -356,7 +433,8 @@ int waitReport(struct node * root) {
     conductor = root;
     int totalwait = 0;
     int i = 0;
-    while (1) {
+    while (1)
+    {
         i++;
         totalwait += conductor->pcb->wait;
         conductor = conductor->next;
@@ -367,14 +445,14 @@ int waitReport(struct node * root) {
     return calculateAverageWait(i, totalwait);
 }
 
-
 int turnaroundReport(struct node * root) {
     struct node *conductor;
     conductor = root;
 
     int i = 0;
     int totalturnaround = 0;
-    while (1) {
+    while (1)
+    {
         i++;
         totalturnaround += conductor->pcb->turnaround;
         conductor = conductor->next;
@@ -389,14 +467,15 @@ void pcbReport(struct node * root) {
     struct node *conductor;
     int i = 0;
     conductor = root;
-    while (1) {
+    while (1)
+    {
         i++;
         printf("\nPID:%d\n"
-                "Turnaround time:%d\n"
-                "Wait Time:%d\n\n",
-                conductor->pcb->pid,
-                conductor->pcb->turnaround,
-                conductor->pcb->wait);
+               "Turnaround time:%d\n"
+               "Wait Time:%d\n\n",
+               conductor->pcb->pid,
+               conductor->pcb->turnaround,
+               conductor->pcb->wait);
         conductor = conductor->next;
 
         if (conductor->next == 0)
@@ -421,44 +500,60 @@ void fifo() {
     pcb * ioptr = ioqueue->del();
     pcb * ptr = queue->del();
 
-    while (1) {
-        if (ptr != 0) {
-            if ((ptr->tarq) <= time) {
-                cpuqueue = priorityInsertion(ptr, cpuptr, cpuqueue);
+    while (1)
+    {
+        if (ptr != 0)
+        {
+            if ((ptr->tarq) <= time)
+            {
+                cpuqueue = fifoInsert(ptr, cpuptr, cpuqueue);
                 ptr->readytime = time;
                 ptr = queue->del();
             }
         }
 
-        if (ioptr != 0) {
-            if ((ioptr->readytime) <= time) {
-                cpuqueue = priorityInsertion(ioptr, cpuptr, cpuqueue);
+        if (ioptr != 0)
+        {
+            if ((ioptr->readytime) <= time)
+            {
+                cpuqueue = fifoInsert(ioptr, cpuptr, cpuqueue);
+                ioptr->readytime = time;
                 ioptr = ioqueue->del();
             }
         }
         cpuptr = cpuqueue->del();
 
-        if (cpuptr != 0) {
+        if (cpuptr != 0)
+        {
             calculateWait(cpuptr, time);
             int i = skipCompleted(cpuptr);
 
             //CPU Processing
-            for (int k = 0; k < cpuptr->cpuburst[i]; k++) {
+            for (int k = 0; k < cpuptr->cpuburst[i]; k++)
+            {
                 printf("|%d", cpuptr->pid);
                 time++;
 
                 //Check for new arrivals
-                if (ptr != 0) {
-                    if (ptr->tarq <= time) {
-                        cpuqueue->add(ptr);
+                if (ptr != 0)
+                {
+                    if (ptr->tarq <= time)
+                    {
+                        cpuqueue = fifoInsert(ptr, cpuptr, cpuqueue);
+                        cpuptr = cpuqueue->del();
+                        ptr->readytime = time;
                         ptr = queue->del();
                     }
                 }
                 //Check IO queue
-                if (ioptr != 0) {
-                    if ((ioptr->readytime) <= time) {
-                        cpuqueue->add(ioptr);
-                        ioptr = ioqueue->del();
+                if (ioptr != 0)
+                {
+                    if ((ioptr->readytime) <= time)
+                    {
+                        cpuqueue = fifoInsert(ioptr, cpuptr, cpuqueue);
+                        cpuptr = cpuqueue->del();
+                        ioptr->readytime = time;
+                        ioptr = queue->del();
                     }
                 }
             }
@@ -467,14 +562,15 @@ void fifo() {
             cpuptr->cpuburst[i] = 0;
 
             //Do IO if CPU complete
-            if (i < cpuptr->tncpu - 1) {
+            if (i < cpuptr->tncpu - 1)
+            {
                 doIO(time, i, cpuptr);
                 ioqueue = ioInsertion(ioptr, cpuptr, ioqueue);
                 ioptr = ioqueue->del();
             }
 
-
-        } else
+        }
+        else
             time++;
 
         //Complete if all jobs have arrived, and IO/CPU is idle
@@ -508,62 +604,76 @@ void RR() {
 
     printf("Quantum time for RR:\n");
     scanf("%d", &quantum);
-    while (1) {
-        if (ptr != 0) {
-            if ((ptr->tarq) <= time) {
+    while (1)
+    {
+        if (ptr != 0)
+        {
+            if ((ptr->tarq) <= time)
+            {
                 cpuqueue->add(ptr);
                 ptr->readytime = time;
                 ptr = queue->del();
             }
         }
 
-        if (ioptr != 0) {
-            if ((ioptr->readytime) <= time) {
+        if (ioptr != 0)
+        {
+            if ((ioptr->readytime) <= time)
+            {
                 cpuqueue->add(ioptr);
                 ioptr = ioqueue->del();
             }
         }
         cpuptr = cpuqueue->del();
 
-        if (cpuptr != 0) {
+        if (cpuptr != 0)
+        {
             calculateWait(cpuptr, time);
             int i = skipCompleted(cpuptr);
 
             //CPU Processing
-            for (int k = 0; k < quantum; k++) {
+            for (int k = 0; k < quantum; k++)
+            {
                 printf("|%d", cpuptr->pid);
                 cpuptr->turnaround++;
                 cpuptr->cpuburst[i]--;
                 time++;
 
                 //Check for new arrivals
-                if (ptr != 0) {
-                    if (ptr->tarq <= time) {
+                if (ptr != 0)
+                {
+                    if (ptr->tarq <= time)
+                    {
                         ptr->readytime = time;
                         cpuqueue->add(ptr);
                         ptr = queue->del();
                     }
                 }
                 //Check IO queue
-                if (ioptr != 0) {
-                    if ((ioptr->readytime) <= time) {
+                if (ioptr != 0)
+                {
+                    if ((ioptr->readytime) <= time)
+                    {
                         cpuqueue->add(ioptr);
                         ioptr = ioqueue->del();
                     }
                 }
                 //Do IO if CPU complete
-                if ((i < cpuptr->tncpu - 1) && (cpuptr->cpuburst[i]) == 0) {
+                if ((i < cpuptr->tncpu - 1) && (cpuptr->cpuburst[i]) == 0)
+                {
                     doIO(time, i, cpuptr);
                     ioqueue = ioInsertion(ioptr, cpuptr, ioqueue);
                     ioptr = ioqueue->del();
                     break;
                 }
             }
-            if (cpuptr->cpuburst[i] != 0) {
+            if (cpuptr->cpuburst[i] != 0)
+            {
                 cpuptr->readytime = time;
                 cpuqueue->add(cpuptr);
             }
-        } else
+        }
+        else
             time++;
 
         //Complete if all jobs have arrived, and IO/CPU is idle
@@ -573,7 +683,7 @@ void RR() {
     }
     printf("\nFIFO complete\n");
     pcbReport(root);
-        turnaroundReport(root);
+    turnaroundReport(root);
     waitReport(root);
 }
 
@@ -594,44 +704,58 @@ void priority() {
     pcb * ioptr = ioqueue->del();
     pcb * ptr = queue->del();
 
-    while (1) {
-        if (ptr != 0) {
-            if ((ptr->tarq) <= time) {
+    while (1)
+    {
+        if (ptr != 0)
+        {
+            if ((ptr->tarq) <= time)
+            {
                 cpuqueue = priorityInsertion(ptr, cpuptr, cpuqueue);
                 ptr->readytime = time;
                 ptr = queue->del();
             }
         }
 
-        if (ioptr != 0) {
-            if ((ioptr->readytime) <= time) {
+        if (ioptr != 0)
+        {
+            if ((ioptr->readytime) <= time)
+            {
                 cpuqueue = priorityInsertion(ioptr, cpuptr, cpuqueue);
+                ioptr->readytime = time;
                 ioptr = ioqueue->del();
             }
         }
         cpuptr = cpuqueue->del();
 
-        if (cpuptr != 0) {
+        if (cpuptr != 0)
+        {
             calculateWait(cpuptr, time);
             int i = skipCompleted(cpuptr);
 
             //CPU Processing
-            for (int k = 0; k < cpuptr->cpuburst[i]; k++) {
+            for (int k = 0; k < cpuptr->cpuburst[i]; k++)
+            {
                 printf("|%d", cpuptr->pid);
                 time++;
 
                 //Check for new arrivals
-                if (ptr != 0) {
-                    if (ptr->tarq <= time) {
+                if (ptr != 0)
+                {
+                    if (ptr->tarq <= time)
+                    {
                         cpuqueue = priorityInsertion(ptr, cpuptr, cpuqueue);
+                        ptr->readytime = time;
                         cpuptr = cpuqueue->del();
                         ptr = queue->del();
                     }
                 }
                 //Check IO queue
-                if (ioptr != 0) {
-                    if ((ioptr->readytime) <= time) {
+                if (ioptr != 0)
+                {
+                    if ((ioptr->readytime) <= time)
+                    {
                         cpuqueue = priorityInsertion(ioptr, cpuptr, cpuqueue);
+                        ioptr->readytime = time;
                         cpuptr = cpuqueue->del();
                         ioptr = ioqueue->del();
                     }
@@ -642,14 +766,15 @@ void priority() {
             cpuptr->cpuburst[i] = 0;
 
             //Do IO if CPU complete
-            if (i < cpuptr->tncpu - 1) {
+            if (i < cpuptr->tncpu - 1)
+            {
                 doIO(time, i, cpuptr);
                 ioqueue = ioInsertion(ioptr, cpuptr, ioqueue);
                 ioptr = ioqueue->del();
             }
 
-
-        } else
+        }
+        else
             time++;
 
         //Complete if all jobs have arrived, and IO/CPU is idle
@@ -659,7 +784,7 @@ void priority() {
     }
     printf("\nPriority complete\n");
     pcbReport(root);
-        turnaroundReport(root);
+    turnaroundReport(root);
     waitReport(root);
 }
 
@@ -680,106 +805,76 @@ void prioritypreempt() {
     pcb * ioptr = ioqueue->del();
     pcb * ptr = queue->del();
 
-    while (1) {
-        if (ptr != 0) {
-            if ((ptr->tarq) <= time) {
-                cpuqueue = priorityInsertion(ptr, cpuptr, cpuqueue);
+    while (1)
+    {
+        if (ptr != 0)
+        {
+            if ((ptr->tarq) <= time)
+            {
+                cpuqueue = preempInsertion(ptr, cpuptr, cpuqueue);
                 ptr->readytime = time;
                 ptr = queue->del();
             }
         }
 
         //Check IO queue
-        if (ioptr != 0) {
-            if ((ioptr->readytime) >= time) {
-                if (ioptr->prio < cpuptr->prio) {
-                    lqueue * swapqueue = new lqueue;
-                    swapqueue->add(ioptr);
-                    swapqueue->add(cpuptr);
-                    cpuptr = cpuqueue->del();
-                    while (cpuptr != 0) {
-                        swapqueue->add(cpuptr);
-                        cpuptr = cpuqueue->del();
-                    }
-                    cpuqueue = swapqueue;
-                    ioptr = queue->del();
-                    //                            cpuptr = cpuqueue->del();
-                    break;
-
-                } else {
-                    cpuqueue = priorityInsertion(ioptr, cpuptr, cpuqueue);
-                    cpuptr = cpuqueue->del();
-                    ioptr = queue->del();
-                }
+        if (ioptr != 0)
+        {
+            if ((ioptr->readytime) >= time)
+            {
+                cpuqueue = preempInsertion(ptr, cpuptr, cpuqueue);
+                ioptr->readytime = time;
+                ioptr = queue->del();
             }
         }
 
         cpuptr = cpuqueue->del();
 
-        if (cpuptr != 0) {
+        if (cpuptr != 0)
+        {
             calculateWait(cpuptr, time);
             int i = skipCompleted(cpuptr);
 
             //CPU Processing
-            while (cpuptr->cpuburst[i] > 0) {
+            while (cpuptr->cpuburst[i] > 0)
+            {
 
                 printf("|%d", cpuptr->pid);
                 cpuptr->turnaround++;
                 cpuptr->cpuburst[i]--;
                 time++;
                 //Check for new arrivals
-                if (ptr != 0) {
-                    if (ptr->tarq >= time) {
-                        if (ptr->prio < cpuptr->prio) {
-                            lqueue * swapqueue = new lqueue;
-                            swapqueue->add(ptr);
-                            swapqueue->add(cpuptr);
-                            cpuptr = cpuqueue->del();
-                            while (cpuptr != 0) {
-                                swapqueue->add(cpuptr);
-                                cpuptr = cpuqueue->del();
-                            }
-                            cpuqueue = swapqueue;
-                            ptr = queue->del();
-                            //                            cpuptr = cpuqueue->del();
-                            break;
-
-                        } else {
-                            cpuqueue = priorityInsertion(ptr, cpuptr, cpuqueue);
-                            cpuptr = cpuqueue->del();
-                            ptr = queue->del();
-                        }
+                if (ptr != 0)
+                {
+                    if (ptr->tarq >= time)
+                    {
+                        cpuqueue = preempInsertion(ptr, cpuptr, cpuqueue);
+                        ptr->readytime = time;
+                        cpuptr = cpuqueue->del();
+                        ptr = queue->del();
                     }
                 }
 
                 //Check IO queue
-                if (ioptr != 0) {
-                    if ((ioptr->readytime) <= time) {
-                        if (ioptr->prio < cpuptr->prio) {
-                            lqueue * swapqueue = new lqueue;
-                            swapqueue->add(ioptr);
-                            swapqueue->add(cpuptr);
+                if (ioptr != 0)
+                {
+                    if ((ioptr->readytime) <= time)
+                    {
+                        if (ioptr->prio < cpuptr->prio)
+                        {
+                            cpuqueue = preempInsertion(ptr, cpuptr, cpuqueue);
                             cpuptr = cpuqueue->del();
-                            while (cpuptr != 0) {
-                                swapqueue->add(cpuptr);
-                                cpuptr = cpuqueue->del();
-                            }
-                            cpuqueue = swapqueue;
-                            ioptr = queue->del();
-                            //                            cpuptr = cpuqueue->del();
-                            break;
-
-                        } else {
-                            cpuqueue = priorityInsertion(ioptr, cpuptr, cpuqueue);
-                            cpuptr = cpuqueue->del();
-                            ioptr = queue->del();
+                            ioptr->readytime = time;
+                            ioptr = ioqueue->del();
                         }
+
                     }
                 }
 
 
                 //Do IO if CPU complete
-                if ((i < cpuptr->tncpu - 1) && (cpuptr->cpuburst[i] == 0)) {
+                if ((i < cpuptr->tncpu - 1) && (cpuptr->cpuburst[i] == 0))
+                {
                     doIO(time, i, cpuptr);
                     ioqueue = ioInsertion(ioptr, cpuptr, ioqueue);
                     ioptr = ioqueue->del();
@@ -789,7 +884,8 @@ void prioritypreempt() {
             }
 
 
-        } else
+        }
+        else
             time++;
 
         //Complete if all jobs have arrived, and IO/CPU is idle
@@ -802,6 +898,7 @@ void prioritypreempt() {
     turnaroundReport(root);
     waitReport(root);
 }
+
 void SJF() {
     int time = 0;
     struct node * root = new node;
@@ -819,45 +916,59 @@ void SJF() {
     pcb * ioptr = ioqueue->del();
     pcb * ptr = queue->del();
 
-    while (1) {
-        if (ptr != 0) {
-            if ((ptr->tarq) <= time) {
+    while (1)
+    {
+        if (ptr != 0)
+        {
+            if ((ptr->tarq) <= time)
+            {
                 cpuqueue = shortJobInsertion(ptr, cpuptr, cpuqueue);
                 ptr->readytime = time;
                 ptr = queue->del();
             }
         }
 
-        if (ioptr != 0) {
-            if ((ioptr->readytime) <= time) {
+        if (ioptr != 0)
+        {
+            if ((ioptr->readytime) <= time)
+            {
                 cpuqueue = shortJobInsertion(ioptr, cpuptr, cpuqueue);
+                ioptr->readytime = time;
                 ioptr = ioqueue->del();
             }
         }
         cpuptr = cpuqueue->del();
 
-        if (cpuptr != 0) {
+        if (cpuptr != 0)
+        {
             calculateWait(cpuptr, time);
             int i = skipCompleted(cpuptr);
 
             //CPU Processing
-            for (int k = 0; k < cpuptr->cpuburst[i]; k++) {
+            for (int k = 0; k < cpuptr->cpuburst[i]; k++)
+            {
                 printf("|%d", cpuptr->pid);
                 time++;
 
                 //Check for new arrivals
-                if (ptr != 0) {
-                    if (ptr->tarq <= time) {
+                if (ptr != 0)
+                {
+                    if (ptr->tarq <= time)
+                    {
                         cpuqueue = shortJobInsertion(ptr, cpuptr, cpuqueue);
                         cpuptr = cpuqueue->del();
+                        ptr->readytime = time;
                         ptr = queue->del();
                     }
                 }
                 //Check IO queue
-                if (ioptr != 0) {
-                    if ((ioptr->readytime) <= time) {
+                if (ioptr != 0)
+                {
+                    if ((ioptr->readytime) <= time)
+                    {
                         cpuqueue = shortJobInsertion(ioptr, cpuptr, cpuqueue);
                         cpuptr = cpuqueue->del();
+                        ioptr->readytime = time;
                         ioptr = ioqueue->del();
                     }
                 }
@@ -867,14 +978,16 @@ void SJF() {
             cpuptr->cpuburst[i] = 0;
 
             //Do IO if CPU complete
-            if (i < cpuptr->tncpu - 1) {
+            if (i < cpuptr->tncpu - 1)
+            {
                 doIO(time, i, cpuptr);
                 ioqueue = ioInsertion(ioptr, cpuptr, ioqueue);
                 ioptr = ioqueue->del();
             }
 
 
-        } else
+        }
+        else
             time++;
 
         //Complete if all jobs have arrived, and IO/CPU is idle
@@ -884,7 +997,7 @@ void SJF() {
     }
     printf("\nPriority complete\n");
     pcbReport(root);
-        turnaroundReport(root);
+    turnaroundReport(root);
     waitReport(root);
 }
 
